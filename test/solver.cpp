@@ -40,4 +40,11 @@ TEST(SolverTests, SimpleSolver) {
   for (int i = 0; i < solution.size(); ++i) {
     EXPECT_NEAR(x[i], solution[i], 10e-14);
   }
+
+  b = {0, 0, 0, 0, 0};
+  solve(A, b, x);
+
+  for (int i = 0; i < solution.size(); ++i) {
+    EXPECT_NEAR(x[i], 0, 10e-14);
+  }
 }

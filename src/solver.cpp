@@ -19,7 +19,7 @@ void solve(const std::vector<std::vector<double>> &A,
 
   double *b =
       reinterpret_cast<double *>(cs_calloc(A[0].size(), sizeof(double)));
-  std::memcpy(b.data(), B, B.size() * sizeof(double));
+  std::memcpy(b, B.data(), B.size() * sizeof(double));
 
   if (cs_cholsol(1, a_comp, b)) {
     std::memcpy(x.data(), b, B.size() * sizeof(double));
