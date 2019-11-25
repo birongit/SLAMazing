@@ -1,9 +1,60 @@
 #include <iostream>
 
 #include "src/solver.h"
+#include <math.h>
 
-// Test solver
-int main() {
+struct SE2 {
+  double x;
+  double y;
+  double t;
+};
+
+struct landmark_SE2 {
+  int id;
+  SE2 pose;
+};
+
+void solve_2D() {
+  int num_landmarks = 2;
+  int num_poses = 4;
+
+  int size = num_landmarks + num_poses;
+
+  // Measurements
+  std::vector<std::pair<SE2, std::vector<landmark_SE2>>> measurements(
+      num_poses, std::pair<SE2, std::vector<landmark_SE2>>{});
+
+  measurements[0].first = {6.0, 0, M_PI / 2.0};
+  measurements[0].second.push_back({0, {-2.0, -1.0, M_PI}});
+  measurements[0].second.push_back({1, {-1.0, 5.0, M_PI}});
+
+  measurements[1].first = {4.0, 0, M_PI / 2.0};
+  measurements[1].second.push_back({1, {-1.0, 1.0, M_PI / 2.0}});
+
+  measurements[2].first = {6.0, 0, M_PI / 2.0};
+  measurements[2].second.push_back({1, {-3.0, 1.0, 0.0}});
+
+  measurements[3].first = {4.0, 0, M_PI / 2.0};
+  measurements[3].second.push_back({0, {1.0, 2.0, -M_PI / 2.0}});
+
+  bool converged = false;
+  while (!converged) {
+    std::vector<std::vector<double>> A(size, std::vector<double>(3 * size, 0));
+    std::vector<double> b(3 * size, 0);
+    std::vector<double> sol(3 * size, 0);
+
+    // Fix initial pose
+    A[0][0] += 1;
+    A[1][1] += 1;
+    A[2][2] += 1;
+    
+    }
+
+    converged = true;
+  }
+}
+
+void solve_1D() {
   int num_landmarks = 2;
   int num_poses = 3;
 
@@ -89,6 +140,12 @@ int main() {
   for (int i = 0; i < sol.size(); ++i) {
     std::cout << sol[i] << " " << std::endl;
   }
+}
+
+int main() {
+  solve_1D();
+
+  solve_2D();
 
   return 0;
 }
