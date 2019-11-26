@@ -34,6 +34,8 @@ void solve_2D() {
 
   // Building the graph
   Graph graph{};
+  graph.pose_vertices.reserve(
+      num_poses + 1); // Allocate enough space so that no reallocation happens
 
   SE2 prev_p{0, 0, 0};
   graph.pose_vertices.push_back(prev_p);
@@ -81,17 +83,37 @@ void solve_2D() {
 
   bool converged = false;
   while (!converged) {
-    std::vector<std::vector<double>> A(size, std::vector<double>(3 * size, 0));
+    std::vector<std::vector<double>> H(size, std::vector<double>(3 * size, 0));
     std::vector<double> b(3 * size, 0);
     std::vector<double> sol(3 * size, 0);
 
     // Fix initial pose
-    A[0][0] += 1;
-    A[1][1] += 1;
-    A[2][2] += 1;
+    H[0][0] += 1;
+    H[1][1] += 1;
+    H[2][2] += 1;
     b[0] += 1;
     b[1] += 1;
     b[2] += 1;
+
+    for (const auto &e : graph.edges) {
+      std::vector<std::vector<double>> A(3, std::vector<double>(3, 0));
+      std::vector<std::vector<double>> B(3, std::vector<double>(3, 0));
+      SE2 err;
+
+      double x_tmp = cos(e.vertex_0->t) * (e.vertex_1->x - e.vertex_0->x) +
+                     sin(e.vertex_0->t) * (e.vertex_1->y - e.vertex_0->y) -
+                     e.connection.x;
+      double y_tmp = -sin(e.vertex_0->t) * (e.vertex_1->x - e.vertex_0->x) +
+                     cos(e.vertex_0->t) * (e.vertex_1->y - e.vertex_0->y) -
+                     e.connection.y;
+
+      err.x = cos(e.connection.t) * x_tmp + sin(e.connection.t) * y_tmp;
+      err.y = -sin(e.connection.t) * x_tmp + cos(e.connection.t) * y_tmp;
+      err.t = normalize_angle(e.vertex_1->t - e.vertex_0->t - e.connection.t);
+
+      std::cout << "Error: "; // Must be ~0
+      std::cout << err.x << " " << err.y << " " << err.t << std::endl;
+    }
 
     converged = true;
   }
