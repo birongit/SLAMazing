@@ -1,13 +1,8 @@
 #include <iostream>
 
+#include "src/graph.h"
 #include "src/solver.h"
 #include <math.h>
-
-struct SE2 {
-  double x;
-  double y;
-  double t;
-};
 
 struct landmark_SE2 {
   int id;
@@ -37,6 +32,53 @@ void solve_2D() {
   measurements[3].second.push_back({0, {-1.0, 2.0, M_PI}});
   measurements[3].second.push_back({1, {5.0, 1.0, M_PI}});
 
+  // Building the graph
+  Graph graph{};
+
+  SE2 prev_p{0, 0, 0};
+  graph.pose_vertices.push_back(prev_p);
+
+  for (const auto &m : measurements) {
+    // pose
+    SE2 pose{};
+    SE2 odo = m.first;
+    pose.x = prev_p.x + cos(prev_p.t) * odo.x - sin(prev_p.t) * odo.y;
+    pose.y = prev_p.y + sin(prev_p.t) * odo.x + cos(prev_p.t) * odo.y;
+    pose.t = normalize_angle(prev_p.t + odo.t);
+
+    std::cout << "p " << pose.x << " " << pose.y << " " << pose.t << std::endl;
+
+    // Add poses to graph
+    Edge edge{};
+    edge.vertex_0 = &graph.pose_vertices.back();
+    graph.pose_vertices.push_back(pose);
+    edge.vertex_1 = &graph.pose_vertices.back();
+    edge.connection = odo;
+    graph.edges.push_back(edge);
+
+    prev_p = pose;
+
+    // landmarks
+    for (const auto &l : m.second) {
+      SE2 landmark{};
+      landmark.x = pose.x + cos(pose.t) * l.pose.x - sin(pose.t) * l.pose.y;
+      landmark.y = pose.y + sin(pose.t) * l.pose.x + cos(pose.t) * l.pose.y;
+      landmark.t = normalize_angle(pose.t + l.pose.t);
+
+      std::cout << l.id << " " << landmark.x << " " << landmark.y << " "
+                << landmark.t << std::endl;
+
+      // Inserts only first time visited
+      graph.landmark_vertices.insert(std::make_pair(l.id, landmark));
+
+      Edge edge{};
+      edge.vertex_0 = &graph.pose_vertices.back();
+      edge.vertex_1 = &graph.landmark_vertices[l.id];
+      edge.connection = l.pose;
+      graph.edges.push_back(edge);
+    }
+  }
+
   bool converged = false;
   while (!converged) {
     std::vector<std::vector<double>> A(size, std::vector<double>(3 * size, 0));
@@ -50,31 +92,6 @@ void solve_2D() {
     b[0] += 1;
     b[1] += 1;
     b[2] += 1;
-
-    SE2 prev_p{0, 0, 0};
-    for (const auto &m : measurements) {
-      // pose
-      SE2 pose{};
-      SE2 odo = m.first;
-      pose.x = prev_p.x + cos(prev_p.t) * odo.x - sin(prev_p.t) * odo.y;
-      pose.y = prev_p.y + sin(prev_p.t) * odo.x + cos(prev_p.t) * odo.y;
-      pose.t = prev_p.t + odo.t;
-
-      std::cout << "p " << pose.x << " " << pose.y << " " << pose.t
-                << std::endl;
-
-      prev_p = pose;
-
-      for (const auto &l : m.second) {
-        SE2 landmark{};
-        landmark.x = pose.x + cos(pose.t) * l.pose.x - sin(pose.t) * l.pose.y;
-        landmark.y = pose.y + sin(pose.t) * l.pose.x + cos(pose.t) * l.pose.y;
-        landmark.t = pose.t + l.pose.t;
-
-        std::cout << l.id << " " << landmark.x << " " << landmark.y << " "
-                  << landmark.t << std::endl;
-      }
-    }
 
     converged = true;
   }

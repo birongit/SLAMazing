@@ -1,6 +1,9 @@
 set(SOURCE_FILES
+    graph.h
     solver.h
     solver.cpp
+    utils.h
+    utils.cpp
     )
 
 include_directories(${CMAKE_SOURCE_DIR}/extern)
