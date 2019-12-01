@@ -5,7 +5,9 @@
 
 struct Edge {
   SE2 *vertex_0;
+  int idx_0;
   SE2 *vertex_1;
+  int idx_1;
   SE2 connection;
 };
 
