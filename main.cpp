@@ -11,13 +11,13 @@ struct landmark_SE2 {
 
 void solve_2D() {
   int num_landmarks = 2;
-  int num_poses = 4;
+  int num_poses = 5;
 
   int size = num_landmarks + num_poses;
 
   // Measurements
   std::vector<std::pair<SE2, std::vector<landmark_SE2>>> measurements(
-      num_poses, std::pair<SE2, std::vector<landmark_SE2>>{}); // num_poses
+      num_poses - 1, std::pair<SE2, std::vector<landmark_SE2>>{}); // num_poses
 
   measurements[0].first = {6.0, 0, M_PI / 2.0};
   measurements[0].second.push_back({1, {1.0, 1.0, M_PI / 2.0}});
@@ -84,6 +84,9 @@ void solve_2D() {
       graph.edges.push_back(edge);
     }
   }
+
+  // Test with arbitrary perturbations
+  graph.pose_vertices[4].t -= 0.1;
 
   bool converged = false;
   while (!converged) {
@@ -197,7 +200,39 @@ void solve_2D() {
       std::cout << sol[i] << " " << std::endl;
     }
 
-    converged = true;
+    // Apply result to Graph
+    for (int i = 0; i < num_poses; ++i) {
+      graph.pose_vertices[i].x -= sol[i * 3 + 0];
+      graph.pose_vertices[i].y -= sol[i * 3 + 1];
+      graph.pose_vertices[i].t -= sol[i * 3 + 2];
+    }
+    for (int i = 0; i < num_landmarks; ++i) {
+      graph.landmark_vertices[i].x -= sol[(num_poses + i) * 3 + 0];
+      graph.landmark_vertices[i].y -= sol[(num_poses + i) * 3 + 1];
+      graph.landmark_vertices[i].t -= sol[(num_poses + i) * 3 + 2];
+    }
+
+    double max = 0.0;
+    std::for_each(sol.begin(), sol.end(),
+                  [&](double s) { max = std::max(std::abs(s), max); });
+
+    // Test for convergence
+    if (max < 0.00001) {
+      converged = true;
+    }
+  }
+
+  std::cout << "Result poses:" << std::endl;
+  for (int i = 0; i < num_poses; ++i) {
+    std::cout << i << " " << graph.pose_vertices[i].x << " "
+              << graph.pose_vertices[i].y << " " << graph.pose_vertices[i].t
+              << std::endl;
+  }
+  std::cout << "Result landmarks:" << std::endl;
+  for (int i = 0; i < num_landmarks; ++i) {
+    std::cout << i << " " << graph.landmark_vertices[i].x << " "
+              << graph.landmark_vertices[i].y << " "
+              << graph.landmark_vertices[i].t << std::endl;
   }
 }
 

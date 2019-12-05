@@ -18,26 +18,13 @@ void addJacobians(int i, int j, const std::vector<std::vector<double>> &A,
   int idx_i = size * i;
   int idx_j = size * j;
 
-  std::vector<std::vector<double>> At(size, std::vector<double>(size, 0));
-  for (int r = 0; r < size; ++r) {
-    for (int c = 0; c < size; ++c) {
-      At[r][c] = A[c][r];
-    }
-  }
-  std::vector<std::vector<double>> Bt(size, std::vector<double>(size, 0));
-  for (int r = 0; r < size; ++r) {
-    for (int c = 0; c < size; ++c) {
-      Bt[r][c] = B[c][r];
-    }
-  }
-
   for (int r = 0; r < size; ++r) {
     for (int c = 0; c < size; ++c) {
       for (int s = 0; s < size; ++s) {
-        H[idx_i + r][idx_i + c] += At[r][s] * A[s][c];
-        H[idx_i + r][idx_j + c] += At[r][s] * B[s][c];
-        H[idx_j + r][idx_i + c] += Bt[r][s] * A[s][c];
-        H[idx_j + r][idx_j + c] += Bt[r][s] * B[s][c];
+        H[idx_i + r][idx_i + c] += A[s][r] * A[s][c];
+        H[idx_i + r][idx_j + c] += A[s][r] * B[s][c];
+        H[idx_j + r][idx_i + c] += B[s][r] * A[s][c];
+        H[idx_j + r][idx_j + c] += B[s][r] * B[s][c];
       }
     }
   }
@@ -51,23 +38,10 @@ void addJacobians(int i, int j, const std::vector<std::vector<double>> &A,
   int idx_i = size * i;
   int idx_j = size * j;
 
-  std::vector<std::vector<double>> At(size, std::vector<double>(size, 0));
-  for (int r = 0; r < size; ++r) {
-    for (int c = 0; c < size; ++c) {
-      At[r][c] = A[c][r];
-    }
-  }
-  std::vector<std::vector<double>> Bt(size, std::vector<double>(size, 0));
-  for (int r = 0; r < size; ++r) {
-    for (int c = 0; c < size; ++c) {
-      Bt[r][c] = B[c][r];
-    }
-  }
-
   for (int r = 0; r < size; ++r) {
     for (int s = 0; s < size; ++s) {
-      b[idx_i + r] += At[r][s] * e[s];
-      b[idx_j + r] += Bt[r][s] * e[s];
+      b[idx_i + r] += A[s][r] * e[s];
+      b[idx_j + r] += B[s][r] * e[s];
     }
   }
 }
