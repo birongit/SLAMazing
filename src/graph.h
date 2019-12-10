@@ -13,7 +13,14 @@ struct Edge {
 
 class Graph {
 public:
+  Graph(int num_poses);
+  void add_motion(const SE2 &odo);
+  void add_measurement(int id, const SE2 &measurement);
+
   std::vector<SE2> pose_vertices;
   std::unordered_map<int, SE2> landmark_vertices;
   std::vector<Edge> edges;
+
+private:
+  int num_poses;
 };

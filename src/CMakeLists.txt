@@ -1,5 +1,6 @@
 set(SOURCE_FILES
     graph.h
+    graph.cpp
     solver.h
     solver.cpp
     utils.h
