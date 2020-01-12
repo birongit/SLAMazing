@@ -45,3 +45,8 @@ void addJacobians(int i, int j, const std::vector<std::vector<double>> &A,
     }
   }
 }
+
+std::ostream &operator<<(std::ostream &os, const SE2 &se2) {
+  os << "SE2{" << se2.x << ", " << se2.y << ", " << se2.t << "}";
+  return os;
+}

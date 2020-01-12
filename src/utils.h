@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 
 struct SE2 {
@@ -5,6 +6,8 @@ struct SE2 {
   double y;
   double t;
 };
+
+std::ostream &operator<<(std::ostream &os, const SE2 &se2);
 
 double normalize_angle(double angle);
 
