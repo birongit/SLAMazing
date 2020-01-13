@@ -48,3 +48,48 @@ TEST(SolverTests, SimpleSolver) {
     EXPECT_NEAR(x[i], 0, 10e-14);
   }
 }
+
+TEST(SolverTests, SolveSimpleGraph3DOF) {
+  int num_poses = 3;
+  int num_landmarks = 2;
+  // Construct the graph
+  Graph graph(num_poses);
+
+  std::vector<SE2> pose_vertices = {{0.0, 0.0, 0.0},
+                                    {6.0, 0.0, M_PI / 2.0},
+                                    {6.0, 4.0, -M_PI},
+                                    {0.0, 4.0, -M_PI / 2.0},
+                                    {0.0, 0.0, 0.0}};
+  graph.pose_vertices = pose_vertices;
+
+  std::unordered_map<int, SE2> landmark_vertices = {{0, {-1.0, 2.0, -M_PI}},
+                                                    {1, {5.0, 1.0, -M_PI}}};
+  graph.landmark_vertices = landmark_vertices;
+
+  auto &pv = graph.pose_vertices;
+  auto &lv = graph.landmark_vertices;
+  graph.edges = {{&pv[0], 0, &pv[1], 1, {6.0, 0, M_PI / 2.0}},
+                 {&pv[1], 1, &lv[1], num_poses + 1, {1.0, 1.0, M_PI / 2.0}},
+                 {&pv[1], 1, &pv[2], 2, {4.0, 0, M_PI / 2.0}},
+                 {&pv[2], 2, &lv[1], num_poses + 1, {1.0, 3.0, 0.0}},
+                 {&pv[2], 2, &pv[3], 3, {6.0, 0, M_PI / 2.0}},
+                 {&pv[3], 3, &lv[0], num_poses + 0, {2.0, -1.0, -M_PI / 2.0}},
+                 {&pv[3], 3, &pv[4], 4, {4.0, 0, M_PI / 2.0}},
+                 {&pv[4], 4, &lv[0], num_poses + 0, {-1.0, 2.0, M_PI}},
+                 {&pv[4], 4, &lv[1], num_poses + 1, {5.0, 1.0, M_PI}}};
+
+  // Optimize graph
+  solve(graph);
+
+  for (int i = 0; i < num_poses; ++i) {
+    EXPECT_NEAR(graph.pose_vertices[i].x, pose_vertices[i].x, 10e-14);
+    EXPECT_NEAR(graph.pose_vertices[i].y, pose_vertices[i].y, 10e-14);
+    EXPECT_NEAR(graph.pose_vertices[i].t, pose_vertices[i].t, 10e-14);
+  }
+
+  for (int i = 0; i < num_landmarks; ++i) {
+    EXPECT_NEAR(graph.landmark_vertices[i].x, landmark_vertices[i].x, 10e-14);
+    EXPECT_NEAR(graph.landmark_vertices[i].y, landmark_vertices[i].y, 10e-14);
+    EXPECT_NEAR(graph.landmark_vertices[i].t, landmark_vertices[i].t, 10e-14);
+  }
+}
