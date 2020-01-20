@@ -1,3 +1,6 @@
+#ifndef GRAPH_H
+#define GRAPH_H
+
 #include "utils.h"
 
 #include <unordered_map>
@@ -24,3 +27,5 @@ public:
 private:
   int num_poses;
 };
+
+#endif // GRAPH_H

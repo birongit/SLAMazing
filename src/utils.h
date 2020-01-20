@@ -1,3 +1,6 @@
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <iostream>
 #include <vector>
 
@@ -18,3 +21,5 @@ void addJacobians(int i, int j, const std::vector<std::vector<double>> &A,
 void addJacobians(int i, int j, const std::vector<std::vector<double>> &A,
                   const std::vector<std::vector<double>> &B,
                   const std::vector<double> &e, std::vector<double> &b);
+
+#endif // UTILS_H
