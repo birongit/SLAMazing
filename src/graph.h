@@ -24,7 +24,7 @@ public:
   std::unordered_map<int, SE2> landmark_vertices;
   std::vector<Edge> edges;
 
-private:
+protected:
   int num_poses;
 };
 

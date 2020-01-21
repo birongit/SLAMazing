@@ -2,6 +2,8 @@
 
 #include "src/solver.h"
 
+#include "test_graph.h"
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
@@ -50,46 +52,58 @@ TEST(SolverTests, SimpleSolver) {
 }
 
 TEST(SolverTests, SolveSimpleGraph3DOF) {
-  int num_poses = 3;
-  int num_landmarks = 2;
-  // Construct the graph
-  Graph graph(num_poses);
+  constexpr double THRESH = 10e-14;
 
-  std::vector<SE2> pose_vertices = {{0.0, 0.0, 0.0},
-                                    {6.0, 0.0, M_PI / 2.0},
-                                    {6.0, 4.0, -M_PI},
-                                    {0.0, 4.0, -M_PI / 2.0},
-                                    {0.0, 0.0, 0.0}};
-  graph.pose_vertices = pose_vertices;
-
-  std::unordered_map<int, SE2> landmark_vertices = {{0, {-1.0, 2.0, -M_PI}},
-                                                    {1, {5.0, 1.0, -M_PI}}};
-  graph.landmark_vertices = landmark_vertices;
-
-  auto &pv = graph.pose_vertices;
-  auto &lv = graph.landmark_vertices;
-  graph.edges = {{&pv[0], 0, &pv[1], 1, {6.0, 0, M_PI / 2.0}},
-                 {&pv[1], 1, &lv[1], num_poses + 1, {1.0, 1.0, M_PI / 2.0}},
-                 {&pv[1], 1, &pv[2], 2, {4.0, 0, M_PI / 2.0}},
-                 {&pv[2], 2, &lv[1], num_poses + 1, {1.0, 3.0, 0.0}},
-                 {&pv[2], 2, &pv[3], 3, {6.0, 0, M_PI / 2.0}},
-                 {&pv[3], 3, &lv[0], num_poses + 0, {2.0, -1.0, -M_PI / 2.0}},
-                 {&pv[3], 3, &pv[4], 4, {4.0, 0, M_PI / 2.0}},
-                 {&pv[4], 4, &lv[0], num_poses + 0, {-1.0, 2.0, M_PI}},
-                 {&pv[4], 4, &lv[1], num_poses + 1, {5.0, 1.0, M_PI}}};
+  // Construct the test graph
+  TestGraph graph{};
 
   // Optimize graph
   solve(graph);
 
-  for (int i = 0; i < num_poses; ++i) {
-    EXPECT_NEAR(graph.pose_vertices[i].x, pose_vertices[i].x, 10e-14);
-    EXPECT_NEAR(graph.pose_vertices[i].y, pose_vertices[i].y, 10e-14);
-    EXPECT_NEAR(graph.pose_vertices[i].t, pose_vertices[i].t, 10e-14);
+  // Check graph for correct solution
+  graph.check_graph(THRESH);
+}
+
+TEST(SolverTests, SolveNoisyGraph3DOF) {
+  constexpr double THRESH = 10e-10;
+  constexpr double NOISE[] = {-0.1, 0.1};
+
+  // Test noisy poses
+  // Cannot apply noise to 0th vertex because initial vertex is fixed
+  for (int i = 1; i < TestGraph::get_correct_poses().size(); ++i) {
+    for (const auto &noise : NOISE) {
+      // Construct the test graph
+      TestGraph graph{};
+
+      // Add noise
+      graph.pose_vertices[i].x += noise;
+      graph.pose_vertices[i].y += noise;
+      graph.pose_vertices[i].t += noise;
+
+      // Optimize graph
+      solve(graph);
+
+      // Check graph for correct solution
+      graph.check_graph(THRESH);
+    }
   }
 
-  for (int i = 0; i < num_landmarks; ++i) {
-    EXPECT_NEAR(graph.landmark_vertices[i].x, landmark_vertices[i].x, 10e-14);
-    EXPECT_NEAR(graph.landmark_vertices[i].y, landmark_vertices[i].y, 10e-14);
-    EXPECT_NEAR(graph.landmark_vertices[i].t, landmark_vertices[i].t, 10e-14);
+  // Test noisy landmarks
+  for (int i = 0; i < TestGraph::get_correct_landmarks().size(); ++i) {
+    for (const auto &noise : NOISE) {
+      // Construct the test graph
+      TestGraph graph{};
+
+      // Add noise
+      graph.landmark_vertices[i].x += noise;
+      graph.landmark_vertices[i].y += noise;
+      graph.landmark_vertices[i].t += noise;
+
+      // Optimize graph
+      solve(graph);
+
+      // Check graph for correct solution
+      graph.check_graph(THRESH);
+    }
   }
 }
